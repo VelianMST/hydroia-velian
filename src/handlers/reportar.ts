@@ -1,0 +1,147 @@
+import { Keyboard } from "grammy";
+import type { MyContext } from "../session.js";
+import type { TipoReporte } from "../services/supabase.js";
+import { crearReporte } from "../repositories/reportesRepo.js";
+import { crearOActualizarUsuario, obtenerUsuario } from "../repositories/usuariosRepo.js";
+
+const ETIQUETAS_TIPO: Record<TipoReporte, string> = {
+  fuga: "Fuga",
+  tandeo: "Tandeo prolongado",
+  mala_calidad: "Mala calidad",
+};
+
+function teclaTipo(): Keyboard {
+  return new Keyboard()
+    .text("1) Fuga")
+    .row()
+    .text("2) Tandeo prolongado")
+    .row()
+    .text("3) Mala calidad")
+    .resized()
+    .oneTime();
+}
+
+function teclaUbicacion(): Keyboard {
+  return new Keyboard()
+    .requestLocation("📍 Compartir ubicación")
+    .row()
+    .text("Saltar ubicación")
+    .resized()
+    .oneTime();
+}
+
+function parsearTipo(texto: string): TipoReporte | null {
+  const t = texto.toLowerCase().trim();
+  if (t.startsWith("1") || t.includes("fuga")) return "fuga";
+  if (t.startsWith("2") || t.includes("tandeo")) return "tandeo";
+  if (t.startsWith("3") || t.includes("calidad")) return "mala_calidad";
+  return null;
+}
+
+export async function handleReportarComando(ctx: MyContext): Promise<void> {
+  try {
+    ctx.session.conversation = { type: "reporte_tipo" };
+    await ctx.reply(
+      "Vamos a registrar tu reporte ⚠️\n\n¿Qué quieres reportar?\n1) Fuga\n2) Tandeo prolongado\n3) Mala calidad",
+      { reply_markup: teclaTipo() },
+    );
+  } catch (err) {
+    console.error("Error en /reportar:", err);
+  }
+}
+
+export async function handleReportarMensaje(ctx: MyContext): Promise<void> {
+  const conv = ctx.session.conversation;
+  const texto = ctx.message?.text ?? "";
+  const chatId = ctx.chat?.id;
+  if (!chatId) return;
+
+  if (conv.type === "reporte_tipo") {
+    const tipo = parsearTipo(texto);
+    if (!tipo) {
+      await ctx.reply("No entendí. Elige 1, 2 o 3.", { reply_markup: teclaTipo() });
+      return;
+    }
+    ctx.session.conversation = { type: "reporte_descripcion", tipoReporte: tipo };
+    await ctx.reply(
+      `Anotado: *${ETIQUETAS_TIPO[tipo]}*. Cuéntame brevemente qué está pasando (1-2 oraciones).`,
+      { parse_mode: "Markdown", reply_markup: { remove_keyboard: true } },
+    );
+    return;
+  }
+
+  if (conv.type === "reporte_descripcion") {
+    const descripcion = texto.trim();
+    if (descripcion.length < 5) {
+      await ctx.reply(
+        "Necesito un poquito más de detalle. ¿Puedes describirlo en una oración?",
+      );
+      return;
+    }
+    ctx.session.conversation = {
+      type: "reporte_ubicacion",
+      tipoReporte: conv.tipoReporte,
+      descripcion,
+    };
+    await ctx.reply(
+      "Si quieres, comparte tu ubicación con el botón de abajo. Si prefieres no, toca *Saltar ubicación*.",
+      { parse_mode: "Markdown", reply_markup: teclaUbicacion() },
+    );
+    return;
+  }
+}
+
+export async function handleReportarUbicacion(ctx: MyContext): Promise<void> {
+  const conv = ctx.session.conversation;
+  if (conv.type !== "reporte_ubicacion") return;
+  const chatId = ctx.chat?.id;
+  if (!chatId) return;
+
+  const loc = ctx.message?.location;
+  const latitud = loc ? Math.round(loc.latitude * 100) / 100 : null;
+  const longitud = loc ? Math.round(loc.longitude * 100) / 100 : null;
+
+  await finalizarReporte(ctx, conv.tipoReporte, conv.descripcion, latitud, longitud);
+}
+
+export async function handleReportarSaltarUbicacion(ctx: MyContext): Promise<void> {
+  const conv = ctx.session.conversation;
+  if (conv.type !== "reporte_ubicacion") return;
+  await finalizarReporte(ctx, conv.tipoReporte, conv.descripcion, null, null);
+}
+
+async function finalizarReporte(
+  ctx: MyContext,
+  tipo: TipoReporte,
+  descripcion: string,
+  latitud: number | null,
+  longitud: number | null,
+): Promise<void> {
+  try {
+    const chatId = ctx.chat?.id;
+    if (!chatId) return;
+    await crearOActualizarUsuario(chatId);
+    const usuario = await obtenerUsuario(chatId);
+    await crearReporte({
+      usuario_id: chatId,
+      tipo,
+      colonia: usuario?.colonia ?? null,
+      latitud,
+      longitud,
+      descripcion,
+    });
+    ctx.session.conversation = { type: "idle" };
+    await ctx.reply(
+      `✅ Reporte registrado. Aparecerá en el mapa público de HydroIA Velian. Gracias por contribuir 💧`,
+      { reply_markup: { remove_keyboard: true } },
+    );
+  } catch (err) {
+    console.error("Error al guardar reporte:", err);
+    ctx.session.conversation = { type: "idle" };
+    await ctx
+      .reply("No pude guardar tu reporte. Intenta de nuevo en un momento.", {
+        reply_markup: { remove_keyboard: true },
+      })
+      .catch(() => {});
+  }
+}
