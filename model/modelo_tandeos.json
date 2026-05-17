@@ -1,0 +1,75 @@
+{
+  "modelo": "regresion_logistica",
+  "libreria": "scikit-learn",
+  "version_sklearn": "1.8.0",
+  "entrenado_utc": "2026-05-17T16:14:40.041237+00:00",
+  "seed": 20260517,
+  "n_observaciones": 24340,
+  "prevalencia": 0.5261709120788824,
+  "features": [
+    "dow_sin",
+    "dow_cos",
+    "hora_sin",
+    "hora_cos",
+    "mes_sin",
+    "mes_cos",
+    "cutzamala_pct",
+    "riesgo_municipio",
+    "reportes_7d"
+  ],
+  "scaler_mean": [
+    -0.001569647511799031,
+    0.0005013291446232489,
+    -0.16215752729564703,
+    -0.3832880098562636,
+    0.07463974313075766,
+    0.019274943726666736,
+    48.00945665571076,
+    0.698771569433032,
+    6.348654478225144
+  ],
+  "scaler_scale": [
+    0.7072451685658566,
+    0.7069664464569945,
+    0.7409171799314569,
+    0.5271024286836511,
+    0.7145220701827496,
+    0.6953528575561232,
+    10.444409531946045,
+    0.15250045730847925,
+    4.172938215430613
+  ],
+  "coef": [
+    0.08389206256628803,
+    0.16163707510837547,
+    0.002355439668059358,
+    -0.008771003012435202,
+    0.418780763445473,
+    0.22240836631387778,
+    -0.6479880280101245,
+    0.8253611054341133,
+    0.3414390257225185
+  ],
+  "intercept": 0.09714243049175206,
+  "metricas": {
+    "auc_roc_test": 0.8008849355314209,
+    "auc_roc_cv_mean": 0.8017521032157436,
+    "auc_roc_cv_std": 0.0042904448855267344,
+    "accuracy": 0.7263763352506163,
+    "precision": 0.7261685682738315,
+    "recall": 0.7704021866458415,
+    "f1": 0.7476316786661614,
+    "matriz_confusion": [
+      [
+        1563,
+        744
+      ],
+      [
+        588,
+        1973
+      ]
+    ]
+  },
+  "ventana_horas": 72,
+  "nota": "Modelo de regresión logística entrenado con dataset semi-sintético calibrado con datos públicos reales (serie del Sistema Cutzamala de CONAGUA) y conocimiento de dominio documentado (afectación por municipio segun SACMEX/prensa). Se reentrena con datos de producción conforme se acumulan."
+}

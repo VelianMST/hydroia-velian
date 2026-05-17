@@ -1,0 +1,38 @@
+{
+  "riesgo_municipios": {
+    "Nicolás Romero": 0.85,
+    "Ecatepec": 0.8,
+    "Chimalhuacán": 0.78,
+    "Naucalpan": 0.7,
+    "Tlalnepantla": 0.66,
+    "Tecámac": 0.58,
+    "Cuautitlán Izcalli": 0.52,
+    "Iztapalapa (CDMX)": 0.62,
+    "Tlalpan (CDMX)": 0.4,
+    "Coyoacán (CDMX)": 0.3
+  },
+  "colonia_a_municipio": {
+    "lomas de san miguel": "Nicolás Romero",
+    "progreso industrial": "Nicolás Romero",
+    "la colmena": "Nicolás Romero",
+    "san josé el vidrio": "Nicolás Romero",
+    "loma del río": "Nicolás Romero",
+    "ciudad azteca": "Ecatepec",
+    "san cristóbal": "Ecatepec",
+    "las américas": "Ecatepec",
+    "san lorenzo": "Chimalhuacán",
+    "xochiaca": "Chimalhuacán",
+    "el molinito": "Naucalpan",
+    "san mateo": "Naucalpan",
+    "san juan ixhuatepec": "Tlalnepantla",
+    "la loma": "Tlalnepantla",
+    "ojo de agua": "Tecámac",
+    "la perla": "Cuautitlán Izcalli",
+    "san lorenzo tezonco": "Iztapalapa (CDMX)",
+    "santa maría aztahuacán": "Iztapalapa (CDMX)",
+    "padierna": "Tlalpan (CDMX)",
+    "los reyes": "Coyoacán (CDMX)"
+  },
+  "riesgo_default": 0.64,
+  "nota": "Si la colonia del usuario no está en el catálogo, el bot intenta una coincidencia por municipio mencionado en el texto; si tampoco, usa riesgo_default (mediana) y marca menor confianza."
+}

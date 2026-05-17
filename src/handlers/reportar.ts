@@ -3,6 +3,7 @@ import type { MyContext } from "../session.js";
 import type { TipoReporte } from "../services/supabase.js";
 import { crearReporte } from "../repositories/reportesRepo.js";
 import { crearOActualizarUsuario, obtenerUsuario } from "../repositories/usuariosRepo.js";
+import { aleatorio, AGRADECIMIENTOS_REPORTE } from "../utils/messages.js";
 
 const ETIQUETAS_TIPO: Record<TipoReporte, string> = {
   fuga: "Fuga",
@@ -131,8 +132,9 @@ async function finalizarReporte(
       descripcion,
     });
     ctx.session.conversation = { type: "idle" };
+    const agradecimiento = aleatorio(AGRADECIMIENTOS_REPORTE);
     await ctx.reply(
-      `✅ Reporte registrado. Aparecerá en el mapa público de HydroIA Velian. Gracias por contribuir 💧`,
+      `${agradecimiento}\n\nAparecerá en el mapa público en cuanto se actualice.`,
       { reply_markup: { remove_keyboard: true } },
     );
   } catch (err) {

@@ -28,6 +28,12 @@ yarn-debug.log*
 .vercel
 **/.vercel
 
+# Python (modelo): entorno virtual y cachés, NO los artefactos del modelo
+model/.venv/
+**/__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
 # OS
 .DS_Store
 *.pem

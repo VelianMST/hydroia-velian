@@ -23,7 +23,7 @@ async function entregarPrediccion(ctx: MyContext, colonia: string): Promise<void
     "",
     `*Recomendación:* ${recomendacion}`,
     "",
-    "_Modelo basado en reportes ciudadanos + factores temporales del Valle de México. Se afina con más datos de la comunidad._",
+    "_Estimación de un modelo de regresión logística (AUC-ROC ≈ 0.80) que combina el nivel del Sistema Cutzamala, reportes ciudadanos y estacionalidad. Es un apoyo a la decisión, no un pronóstico oficial; se reentrena con datos de la comunidad._",
   ].join("\n");
 
   await ctx.reply(mensaje, { parse_mode: "Markdown" });

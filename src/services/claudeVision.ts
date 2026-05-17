@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { config } from "../config.js";
 
-const client = new Anthropic({ apiKey: config.anthropicApiKey });
+const client = new Anthropic({ apiKey: config.anthropicApiKey, maxRetries: 3 });
 
 const MODEL = "claude-sonnet-4-5";
 

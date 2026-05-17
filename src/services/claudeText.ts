@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { config } from "../config.js";
 
-const client = new Anthropic({ apiKey: config.anthropicApiKey });
+const client = new Anthropic({ apiKey: config.anthropicApiKey, maxRetries: 3 });
 const MODEL = "claude-sonnet-4-5";
 
 const SYSTEM_PROMPT = `Eres HydroIA Velian, un asistente conversacional ciudadano sobre la crisis del agua en el Valle de México (CDMX y Estado de México).

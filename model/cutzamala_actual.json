@@ -1,0 +1,8 @@
+{
+  "porcentaje": 57,
+  "fecha": "2026-05-04",
+  "fuente": "CONAGUA - Seguimiento semanal Sistema Cutzamala (ancla pública documentada)",
+  "actualizado_por": "manual",
+  "nota": "Valor semanal del Sistema Cutzamala. Lo actualiza automáticamente el bot si logra leer una fuente pública; si no, usa este valor. Para actualizarlo a mano: busca 'Sistema Cutzamala porcentaje almacenamiento' en el boletín semanal de CONAGUA y cambia 'porcentaje' y 'fecha'.",
+  "ultimo_intento_remoto": "2026-05-17T16:09:29.538Z"
+}

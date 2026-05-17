@@ -8,6 +8,7 @@ import { responderTexto } from "../services/claudeText.js";
 import { handleReportarMensaje } from "./reportar.js";
 import { handlePrediccionMensaje } from "./prediccion.js";
 import { handleBorrarMensaje } from "./privacy.js";
+import { aleatorio, RESPUESTAS_NO_ENTENDIDAS } from "../utils/messages.js";
 
 const PALABRAS_COLONIA = [
   "vivo en",
@@ -100,10 +101,6 @@ export async function handleText(ctx: MyContext): Promise<void> {
     await ctx.reply(respuesta);
   } catch (err) {
     console.error("Error en handler de texto:", err);
-    await ctx
-      .reply(
-        "Tuve un problema procesando tu mensaje. Usa /ayuda para ver lo que sé hacer.",
-      )
-      .catch(() => {});
+    await ctx.reply(aleatorio(RESPUESTAS_NO_ENTENDIDAS)).catch(() => {});
   }
 }

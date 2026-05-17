@@ -1,3 +1,4 @@
+import { InlineKeyboard } from "grammy";
 import type { MyContext } from "../session.js";
 import {
   analizarAguaConIA,
@@ -69,6 +70,17 @@ function detectarMimeType(filePath: string | undefined): MimeTypeImagen {
   return MIME_POR_EXTENSION[ext] ?? "image/jpeg";
 }
 
+function tecladoAcciones(diagnosticoId: string | null): InlineKeyboard {
+  const kb = new InlineKeyboard()
+    .text("⚠️ Reportar mala calidad", "diag:reportar")
+    .row()
+    .text("🧼 Tips de limpieza de tinaco", "diag:limpieza");
+  if (diagnosticoId) {
+    kb.row().text("🌐 Compartir en mapa público", `diag:compartir:${diagnosticoId}`);
+  }
+  return kb;
+}
+
 export async function handlePhoto(ctx: MyContext): Promise<void> {
   const photos = ctx.message?.photo;
   if (!photos || photos.length === 0) {
@@ -81,7 +93,6 @@ export async function handlePhoto(ctx: MyContext): Promise<void> {
   try {
     const fotoMasGrande = photos[photos.length - 1];
     const file = await ctx.api.getFile(fotoMasGrande.file_id);
-
     if (!file.file_path) {
       throw new Error("Telegram no devolvió la ruta del archivo.");
     }
@@ -98,10 +109,11 @@ export async function handlePhoto(ctx: MyContext): Promise<void> {
     const diagnostico = await analizarAguaConIA(base64, mimeType);
 
     const chatId = ctx.chat?.id;
+    let diagnosticoId: string | null = null;
     if (chatId) {
       try {
         await crearOActualizarUsuario(chatId);
-        await guardarDiagnostico({
+        const guardado = await guardarDiagnostico({
           usuario_id: chatId,
           nivel_riesgo: diagnostico.nivel_riesgo,
           color_observado: diagnostico.color_observado,
@@ -110,12 +122,16 @@ export async function handlePhoto(ctx: MyContext): Promise<void> {
           diagnostico: diagnostico.diagnostico,
           recomendacion: diagnostico.recomendacion,
         });
+        diagnosticoId = guardado.id;
       } catch (errDb) {
         console.error("No se pudo guardar el diagnóstico:", errDb);
       }
     }
 
-    await ctx.reply(formatearDiagnostico(diagnostico), { parse_mode: "Markdown" });
+    await ctx.reply(formatearDiagnostico(diagnostico), {
+      parse_mode: "Markdown",
+      reply_markup: tecladoAcciones(diagnosticoId),
+    });
   } catch (err) {
     console.error("Error analizando foto:", err);
     await ctx.reply(
