@@ -1,4 +1,5 @@
 import type { MyContext } from "../session.js";
+import { obtenerTexto } from "../session.js";
 import { borrarPorUsuario as borrarDiagnosticosPorUsuario } from "../repositories/diagnosticosRepo.js";
 import { borrarPorUsuario as borrarReportesPorUsuario } from "../repositories/reportesRepo.js";
 import { borrarUsuario } from "../repositories/usuariosRepo.js";
@@ -21,7 +22,7 @@ export async function handleBorrarMensaje(ctx: MyContext): Promise<void> {
   const chatId = ctx.chat?.id;
   if (!chatId) return;
 
-  const respuesta = (ctx.message?.text ?? "").trim().toLowerCase();
+  const respuesta = obtenerTexto(ctx).toLowerCase();
   if (respuesta === "sí" || respuesta === "si" || respuesta === "yes") {
     try {
       await borrarDiagnosticosPorUsuario(chatId);

@@ -6,7 +6,10 @@ import {
   nivelDescriptivo,
   recomendacionPara,
 } from "../services/prediccion.js";
+import { programaSacmexActivo } from "../services/datosAbiertos.js";
+import { normalizarNombre } from "../utils/geo.js";
 import { pedirColonia } from "./ubicacionPrompt.js";
+import { enviarVoz } from "./responderVoz.js";
 
 function emojiNivel(nivel: string): string {
   if (nivel === "alta") return "🚨";
@@ -23,6 +26,22 @@ export async function entregarPrediccion(
   const nivel = nivelDescriptivo(r.probabilidad);
   const recomendacion = recomendacionPara(r.probabilidad);
 
+  // Cruce con datos abiertos: ¿hay programa de tandeo SACMEX/CONAGUA
+  // documentado y vigente para el municipio del usuario?
+  let lineaSacmex = "";
+  try {
+    const chatId = ctx.chat?.id;
+    const usuario = chatId ? await obtenerUsuario(chatId) : null;
+    if (usuario?.municipio) {
+      const prog = programaSacmexActivo(normalizarNombre(usuario.municipio));
+      if (prog) {
+        lineaSacmex = `\n📰 *Dato oficial:* ${prog.descripcion} (${prog.fuente}).`;
+      }
+    }
+  } catch {
+    /* el cruce es complementario; si falla no afecta la predicción */
+  }
+
   const mensaje = [
     `${emojiNivel(nivel)} *Predicción de tandeo en ${colonia}*`,
     "",
@@ -31,11 +50,18 @@ export async function entregarPrediccion(
     `*Factor principal:* ${r.factor_principal}`,
     "",
     `*Recomendación:* ${recomendacion}`,
+    lineaSacmex,
     "",
     "_Estimación de un modelo de regresión logística (AUC-ROC ≈ 0.80) que combina el nivel del Sistema Cutzamala, reportes ciudadanos y estacionalidad. Es un apoyo a la decisión, no un pronóstico oficial; se reentrena con datos de la comunidad._",
   ].join("\n");
 
   await ctx.reply(mensaje, { parse_mode: "Markdown" });
+
+  // Si preguntó por voz, también le respondemos hablado (resumen claro).
+  await enviarVoz(
+    ctx,
+    `Predicción de tandeo en ${colonia}. Probabilidad ${porcentaje} por ciento, nivel ${nivel}. ${recomendacion}`,
+  );
 }
 
 export async function handlePrediccionComando(ctx: MyContext): Promise<void> {

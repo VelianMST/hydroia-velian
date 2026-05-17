@@ -5,7 +5,12 @@ export interface Config {
   anthropicApiKey: string;
   supabaseUrl: string;
   supabaseKey: string;
+  openaiApiKey: string;
   port: number;
+}
+
+function optional(name: string): string {
+  return process.env[name]?.trim() ?? "";
 }
 
 function required(name: string): string {
@@ -30,5 +35,6 @@ export const config: Config = {
   anthropicApiKey: required("ANTHROPIC_API_KEY"),
   supabaseUrl: required("SUPABASE_URL"),
   supabaseKey: required("SUPABASE_KEY"),
+  openaiApiKey: optional("OPENAI_API_KEY"),
   port: optionalNumber("PORT", 3001),
 };

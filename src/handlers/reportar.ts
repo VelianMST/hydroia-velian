@@ -1,5 +1,6 @@
 import { Keyboard } from "grammy";
 import type { MyContext } from "../session.js";
+import { obtenerTexto } from "../session.js";
 import type { TipoReporte } from "../services/supabase.js";
 import { crearReporte } from "../repositories/reportesRepo.js";
 import { obtenerUsuario } from "../repositories/usuariosRepo.js";
@@ -70,7 +71,7 @@ export async function handleReportarComando(ctx: MyContext): Promise<void> {
 
 export async function handleReportarMensaje(ctx: MyContext): Promise<void> {
   const conv = ctx.session.conversation;
-  const texto = ctx.message?.text ?? "";
+  const texto = obtenerTexto(ctx);
   const chatId = ctx.chat?.id;
   if (!chatId) return;
 

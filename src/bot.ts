@@ -17,6 +17,7 @@ import { handleTips } from "./handlers/tips.js";
 import { handleEstadisticas } from "./handlers/estadisticas.js";
 import { handleSobre } from "./handlers/sobre.js";
 import { handleCallback } from "./handlers/callbacks.js";
+import { handleVoice } from "./handlers/voice.js";
 
 export const bot = new Bot<MyContext>(config.telegramBotToken);
 
@@ -40,6 +41,8 @@ bot.on("message:location", handleReportarUbicacion);
 bot.hears("Saltar ubicación", handleReportarSaltarUbicacion);
 
 bot.on("message:photo", handlePhoto);
+bot.on("message:voice", handleVoice);
+bot.on("message:audio", handleVoice);
 bot.on("message:text", handleText);
 
 bot.catch((err) => {

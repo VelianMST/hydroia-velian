@@ -1,4 +1,5 @@
 import type { MyContext } from "../session.js";
+import { obtenerTexto } from "../session.js";
 import { registrarUbicacionUsuario } from "../repositories/usuariosRepo.js";
 import { pedirMunicipio } from "./ubicacionPrompt.js";
 import { entregarPrediccion } from "./prediccion.js";
@@ -8,7 +9,7 @@ import { iniciarTipoReporte } from "./reportar.js";
 export async function handleColoniaMensaje(ctx: MyContext): Promise<void> {
   const conv = ctx.session.conversation;
   if (conv.type !== "esperando_colonia") return;
-  const texto = (ctx.message?.text ?? "").trim();
+  const texto = obtenerTexto(ctx);
   if (texto.length < 2 || texto.length > 80 || texto.startsWith("/")) {
     await ctx.reply(
       "Necesito solo el nombre de la colonia, por ejemplo: *Lomas de San Miguel*.",
@@ -26,7 +27,7 @@ export async function handleMunicipioMensaje(ctx: MyContext): Promise<void> {
   const chatId = ctx.chat?.id;
   if (!chatId) return;
 
-  const raw = (ctx.message?.text ?? "").trim();
+  const raw = obtenerTexto(ctx);
   if (raw.length < 2 || raw.startsWith("/")) {
     await ctx.reply("Dime el municipio o alcaldía, por favor.");
     return;

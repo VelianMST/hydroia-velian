@@ -7,14 +7,17 @@ import MapWrapper from "./MapWrapper";
 import ReportesPorColoniaChart from "./ReportesPorColoniaChart";
 import RiesgoChart from "./RiesgoChart";
 import RecentReportsTable from "./RecentReportsTable";
+import DatosAbiertosPanel from "./DatosAbiertos";
 import {
   obtenerDiagnosticos,
   obtenerEstadisticas,
   obtenerReportes,
+  obtenerDatosAbiertos,
   agruparReportesPorColonia,
   type Estadisticas,
   type ReportesPorColonia,
   type DistribucionRiesgo,
+  type DatosAbiertos,
 } from "@/lib/queries";
 import type { DiagnosticoPublico, ReportePublico } from "@/lib/supabase";
 
@@ -24,18 +27,21 @@ export default function Dashboard() {
   const [reportes, setReportes] = useState<ReportePublico[] | null>(null);
   const [diagnosticos, setDiagnosticos] = useState<DiagnosticoPublico[] | null>(null);
   const [stats, setStats] = useState<Estadisticas | null>(null);
+  const [datosAbiertos, setDatosAbiertos] = useState<DatosAbiertos | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
     try {
-      const [r, d, s] = await Promise.all([
+      const [r, d, s, da] = await Promise.all([
         obtenerReportes(),
         obtenerDiagnosticos(),
         obtenerEstadisticas(),
+        obtenerDatosAbiertos(),
       ]);
       setReportes(r);
       setDiagnosticos(d);
       setStats(s);
+      setDatosAbiertos(da);
       setError(null);
     } catch (err) {
       console.error("Error cargando datos:", err);
@@ -101,6 +107,8 @@ export default function Dashboard() {
           />
         </div>
       </section>
+
+      <DatosAbiertosPanel datos={datosAbiertos} cargando={cargando} />
 
       {error && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-6">

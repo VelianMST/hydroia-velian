@@ -64,6 +64,16 @@ export interface Prediccion {
   fecha_calculo: string;
 }
 
+export interface DatoAbierto {
+  id: string;
+  indicador: string;
+  valor: number | null;
+  texto: string | null;
+  fuente: string | null;
+  confiable: boolean;
+  fecha: string;
+}
+
 export const supabase = createClient(config.supabaseUrl, config.supabaseKey, {
   auth: { persistSession: false },
 });

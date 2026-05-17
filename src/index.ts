@@ -1,11 +1,13 @@
 import { bot, setBotCommands } from "./bot.js";
 import { iniciarServidorHttp } from "./api/server.js";
 import { iniciarNotificaciones } from "./services/notificaciones.js";
+import { programarIngesta } from "./services/datosAbiertos.js";
 
 async function main(): Promise<void> {
   iniciarServidorHttp();
   await setBotCommands();
   iniciarNotificaciones(bot);
+  programarIngesta();
 
   console.log("💧 HydroIA Velian iniciando...");
 
@@ -13,6 +15,7 @@ async function main(): Promise<void> {
     onStart: (info) => {
       console.log(`✅ Bot conectado como @${info.username}`);
       console.log("Notificaciones proactivas: cada 6 h.");
+      console.log("Ingesta de datos abiertos: al arranque + diaria 05:00.");
       console.log("Presiona Ctrl+C para detenerlo.");
     },
   });

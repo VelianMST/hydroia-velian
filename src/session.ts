@@ -16,8 +16,25 @@ export interface SessionData {
   conversation: Conversation;
 }
 
-export type MyContext = Context & SessionFlavor<SessionData>;
+/**
+ * `vozTexto`: cuando un mensaje llega como nota de voz, el handler de voz lo
+ * transcribe y guarda aquí el texto, para que TODO el ruteo (colonia,
+ * municipio, /reportar, preguntas) funcione igual que con texto escrito.
+ * `vozRespuesta`: indica que el usuario interactuó por voz, así las
+ * respuestas clave también se contestan habladas (TTS).
+ */
+export type MyContext = Context &
+  SessionFlavor<SessionData> & {
+    vozTexto?: string;
+    vozRespuesta?: boolean;
+  };
 
 export function initialSession(): SessionData {
   return { conversation: { type: "idle" } };
 }
+
+/** Texto efectivo del mensaje: transcripción de voz si la hay, si no el texto. */
+export function obtenerTexto(ctx: MyContext): string {
+  return (ctx.vozTexto ?? ctx.message?.text ?? "").trim();
+}
+

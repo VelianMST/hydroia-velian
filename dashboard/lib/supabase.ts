@@ -33,3 +33,12 @@ export interface DiagnosticoPublico {
 export interface UsuarioPublico {
   colonia: string | null;
 }
+
+export interface DatoAbiertoPublico {
+  indicador: string;
+  valor: number | null;
+  texto: string | null;
+  fuente: string | null;
+  confiable: boolean;
+  fecha: string;
+}

@@ -1,4 +1,9 @@
-import { supabase, type ReportePublico, type DiagnosticoPublico } from "./supabase";
+import {
+  supabase,
+  type ReportePublico,
+  type DiagnosticoPublico,
+  type DatoAbiertoPublico,
+} from "./supabase";
 import { normalizarNombre, nombreBonito } from "./geo";
 
 const COLS_REPORTE =
@@ -97,6 +102,33 @@ export async function obtenerReportesPorColonia(
   reportes?: ReportePublico[],
 ): Promise<ReportesPorColonia[]> {
   return agruparReportesPorColonia(reportes ?? (await obtenerReportes()));
+}
+
+export interface DatosAbiertos {
+  cutzamala: DatoAbiertoPublico | null;
+  sacmex: DatoAbiertoPublico | null;
+}
+
+const COLS_DATO = "indicador, valor, texto, fuente, confiable, fecha";
+
+async function ultimo(indicador: string): Promise<DatoAbiertoPublico | null> {
+  const { data, error } = await supabase
+    .from("datos_abiertos")
+    .select(COLS_DATO)
+    .eq("indicador", indicador)
+    .order("fecha", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) return null; // tabla aún sin migrar / sin datos: no rompe el panel
+  return (data as DatoAbiertoPublico | null) ?? null;
+}
+
+export async function obtenerDatosAbiertos(): Promise<DatosAbiertos> {
+  const [cutzamala, sacmex] = await Promise.all([
+    ultimo("cutzamala_pct"),
+    ultimo("sacmex_tandeo"),
+  ]);
+  return { cutzamala, sacmex };
 }
 
 export interface DistribucionRiesgo {
