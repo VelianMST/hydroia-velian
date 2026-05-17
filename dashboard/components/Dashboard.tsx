@@ -11,6 +11,7 @@ import {
   obtenerDiagnosticos,
   obtenerEstadisticas,
   obtenerReportes,
+  agruparReportesPorColonia,
   type Estadisticas,
   type ReportesPorColonia,
   type DistribucionRiesgo,
@@ -50,18 +51,10 @@ export default function Dashboard() {
     return () => clearInterval(id);
   }, [cargar]);
 
-  const reportesPorColonia: ReportesPorColonia[] = useMemo(() => {
-    if (!reportes) return [];
-    const cuentas = new Map<string, number>();
-    for (const r of reportes) {
-      const c = (r.colonia ?? "Sin colonia").trim() || "Sin colonia";
-      cuentas.set(c, (cuentas.get(c) ?? 0) + 1);
-    }
-    return Array.from(cuentas.entries())
-      .map(([colonia, total]) => ({ colonia, total }))
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 10);
-  }, [reportes]);
+  const reportesPorColonia: ReportesPorColonia[] = useMemo(
+    () => (reportes ? agruparReportesPorColonia(reportes) : []),
+    [reportes],
+  );
 
   const distribucionRiesgo: DistribucionRiesgo[] = useMemo(() => {
     if (!diagnosticos) return [];

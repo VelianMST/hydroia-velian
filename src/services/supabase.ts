@@ -4,8 +4,11 @@ import { config } from "../config.js";
 export interface Usuario {
   id: number;
   colonia: string | null;
+  colonia_norm: string | null;
   municipio: string | null;
   estado: string | null;
+  lat: number | null;
+  lng: number | null;
   consentimiento: boolean;
   fecha_alta: string;
   fecha_ultimo_contacto: string | null;
@@ -31,8 +34,13 @@ export interface Reporte {
   usuario_id: number;
   tipo: TipoReporte;
   colonia: string | null;
+  colonia_norm: string | null;
+  municipio: string | null;
+  estado_geo: string | null;
   latitud: number | null;
   longitud: number | null;
+  lat: number | null;
+  lng: number | null;
   descripcion: string;
   fecha: string;
   estado: "abierto" | "atendido";

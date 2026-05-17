@@ -1,4 +1,5 @@
 import { supabase, type Usuario } from "../services/supabase.js";
+import { geocodificar } from "../services/geocoding.js";
 
 export async function crearOActualizarUsuario(
   id: number,
@@ -28,11 +29,28 @@ export async function obtenerUsuario(id: number): Promise<Usuario | null> {
   return (data as Usuario | null) ?? null;
 }
 
-export async function actualizarColonia(
+/**
+ * Registra colonia + municipio + estado del usuario: normaliza, geocodifica
+ * (caché → catálogo → Nominatim → centroide) y guarda todo, incluido el
+ * centroide resuelto. Devuelve también de dónde salió la coordenada.
+ */
+export async function registrarUbicacionUsuario(
   id: number,
   colonia: string,
-): Promise<Usuario> {
-  return crearOActualizarUsuario(id, { colonia, consentimiento: true });
+  municipio: string | null,
+  estado: string | null,
+): Promise<{ usuario: Usuario; fuente: string; municipioDisplay: string }> {
+  const geo = await geocodificar(colonia, municipio, estado);
+  const usuario = await crearOActualizarUsuario(id, {
+    colonia: geo.lugar.coloniaDisplay,
+    colonia_norm: geo.lugar.coloniaNorm,
+    municipio: geo.lugar.municipioDisplay || null,
+    estado: geo.lugar.estado,
+    lat: geo.lat,
+    lng: geo.lng,
+    consentimiento: true,
+  });
+  return { usuario, fuente: geo.fuente, municipioDisplay: geo.lugar.municipioDisplay };
 }
 
 export async function borrarUsuario(id: number): Promise<void> {

@@ -1,6 +1,12 @@
 import type { MyContext } from "../session.js";
-import { obtenerUsuario, actualizarColonia } from "../repositories/usuariosRepo.js";
-import { calcularPrediccion, ventanaHoras, nivelDescriptivo, recomendacionPara } from "../services/prediccion.js";
+import { obtenerUsuario } from "../repositories/usuariosRepo.js";
+import {
+  calcularPrediccion,
+  ventanaHoras,
+  nivelDescriptivo,
+  recomendacionPara,
+} from "../services/prediccion.js";
+import { pedirColonia } from "./ubicacionPrompt.js";
 
 function emojiNivel(nivel: string): string {
   if (nivel === "alta") return "🚨";
@@ -8,7 +14,10 @@ function emojiNivel(nivel: string): string {
   return "✅";
 }
 
-async function entregarPrediccion(ctx: MyContext, colonia: string): Promise<void> {
+export async function entregarPrediccion(
+  ctx: MyContext,
+  colonia: string,
+): Promise<void> {
   const r = await calcularPrediccion(colonia);
   const porcentaje = Math.round(r.probabilidad * 100);
   const nivel = nivelDescriptivo(r.probabilidad);
@@ -36,34 +45,18 @@ export async function handlePrediccionComando(ctx: MyContext): Promise<void> {
 
     const usuario = await obtenerUsuario(chatId);
     if (!usuario?.colonia) {
-      ctx.session.conversation = { type: "esperando_colonia_para_prediccion" };
       await ctx.reply(
-        "📍 Para hacerte la predicción necesito el nombre de tu colonia. ¿En qué colonia vives?",
+        "Para hacerte la predicción necesito saber dónde vives.",
       );
+      await pedirColonia(ctx, "prediccion");
       return;
     }
 
     await entregarPrediccion(ctx, usuario.colonia);
   } catch (err) {
     console.error("Error en /prediccion:", err);
-    await ctx.reply("No pude calcular la predicción. Intenta en un momento.").catch(() => {});
-  }
-}
-
-export async function handlePrediccionMensaje(ctx: MyContext): Promise<void> {
-  try {
-    const conv = ctx.session.conversation;
-    if (conv.type !== "esperando_colonia_para_prediccion") return;
-
-    const chatId = ctx.chat?.id;
-    const texto = ctx.message?.text?.trim();
-    if (!chatId || !texto || texto.length < 2) return;
-
-    await actualizarColonia(chatId, texto);
-    ctx.session.conversation = { type: "idle" };
-    await entregarPrediccion(ctx, texto);
-  } catch (err) {
-    console.error("Error procesando colonia para predicción:", err);
-    ctx.session.conversation = { type: "idle" };
+    await ctx
+      .reply("No pude calcular la predicción. Intenta en un momento.")
+      .catch(() => {});
   }
 }

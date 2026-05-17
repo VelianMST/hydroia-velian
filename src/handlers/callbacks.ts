@@ -1,5 +1,7 @@
 import type { MyContext } from "../session.js";
 import { TIPS_LIMPIEZA_TINACO } from "../services/tips.js";
+import { obtenerUsuario } from "../repositories/usuariosRepo.js";
+import { pedirColonia } from "./ubicacionPrompt.js";
 
 export async function handleCallback(ctx: MyContext): Promise<void> {
   const data = ctx.callbackQuery?.data;
@@ -8,6 +10,15 @@ export async function handleCallback(ctx: MyContext): Promise<void> {
   try {
     if (data === "diag:reportar") {
       await ctx.answerCallbackQuery();
+      const chatId = ctx.chat?.id;
+      const usuario = chatId ? await obtenerUsuario(chatId) : null;
+      if (!usuario?.colonia || !usuario?.municipio) {
+        await ctx.reply(
+          "Para registrar tu reporte primero necesito saber dónde vives (una sola vez).",
+        );
+        await pedirColonia(ctx, "reporte");
+        return;
+      }
       ctx.session.conversation = {
         type: "reporte_descripcion",
         tipoReporte: "mala_calidad",

@@ -1,8 +1,26 @@
 import { supabase, type Reporte, type TipoReporte } from "../services/supabase.js";
+import { normalizarNombre } from "../utils/geo.js";
 
-export async function crearReporte(
-  reporte: Omit<Reporte, "id" | "fecha" | "estado"> & { estado?: Reporte["estado"] },
-): Promise<Reporte> {
+export type NuevoReporte = Pick<
+  Reporte,
+  "usuario_id" | "tipo" | "descripcion"
+> &
+  Partial<
+    Pick<
+      Reporte,
+      | "colonia"
+      | "colonia_norm"
+      | "municipio"
+      | "estado_geo"
+      | "latitud"
+      | "longitud"
+      | "lat"
+      | "lng"
+      | "estado"
+    >
+  >;
+
+export async function crearReporte(reporte: NuevoReporte): Promise<Reporte> {
   const { data, error } = await supabase
     .from("reportes")
     .insert(reporte)
@@ -23,10 +41,13 @@ export async function listarRecientes(limite = 50): Promise<Reporte[]> {
 }
 
 export async function listarPorColonia(
-  colonia: string,
+  coloniaNorm: string,
   desde?: Date,
 ): Promise<Reporte[]> {
-  let q = supabase.from("reportes").select("*").eq("colonia", colonia);
+  let q = supabase
+    .from("reportes")
+    .select("*")
+    .eq("colonia_norm", normalizarNombre(coloniaNorm));
   if (desde) q = q.gte("fecha", desde.toISOString());
   const { data, error } = await q.order("fecha", { ascending: false });
   if (error) throw error;
@@ -41,25 +62,26 @@ export async function contarTandeosRecientes(
   const { count, error } = await supabase
     .from("reportes")
     .select("*", { count: "exact", head: true })
-    .eq("colonia", colonia)
+    .eq("colonia_norm", normalizarNombre(colonia))
     .eq("tipo", "tandeo" satisfies TipoReporte)
     .gte("fecha", desde.toISOString());
   if (error) throw error;
   return count ?? 0;
 }
 
-export async function listarPublicos(limite = 200): Promise<
-  Array<Pick<Reporte, "id" | "tipo" | "colonia" | "descripcion" | "fecha">>
-> {
+export type ReportePublicoFila = Pick<
+  Reporte,
+  "id" | "tipo" | "colonia" | "colonia_norm" | "municipio" | "lat" | "lng" | "descripcion" | "fecha"
+>;
+
+export async function listarPublicos(limite = 500): Promise<ReportePublicoFila[]> {
   const { data, error } = await supabase
     .from("reportes")
-    .select("id, tipo, colonia, descripcion, fecha")
+    .select("id, tipo, colonia, colonia_norm, municipio, lat, lng, descripcion, fecha")
     .order("fecha", { ascending: false })
     .limit(limite);
   if (error) throw error;
-  return (data ?? []) as Array<
-    Pick<Reporte, "id" | "tipo" | "colonia" | "descripcion" | "fecha">
-  >;
+  return (data ?? []) as ReportePublicoFila[];
 }
 
 export async function borrarPorUsuario(usuarioId: number): Promise<void> {

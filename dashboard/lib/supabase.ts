@@ -17,6 +17,10 @@ export interface ReportePublico {
   id: string;
   tipo: "fuga" | "tandeo" | "mala_calidad";
   colonia: string | null;
+  colonia_norm: string | null;
+  municipio: string | null;
+  lat: number | null;
+  lng: number | null;
   descripcion: string;
   fecha: string;
 }
