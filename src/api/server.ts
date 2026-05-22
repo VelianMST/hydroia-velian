@@ -14,6 +14,14 @@ export function crearServidorHttp(): express.Express {
   // Recibe lecturas del sensor ESP32
   app.post("/api/sensor", async (req: Request, res: Response) => {
     try {
+      // Autenticación opcional: si hay SENSOR_API_KEY configurada, se exige.
+      if (config.sensorApiKey) {
+        const key = req.header("x-api-key");
+        if (key !== config.sensorApiKey) {
+          return res.status(401).json({ ok: false, error: "API key inválida." });
+        }
+      }
+
       const {
         dispositivo_id,
         turbidez_ntu,
@@ -24,6 +32,8 @@ export function crearServidorHttp(): express.Express {
 
       if (
         typeof dispositivo_id !== "string" ||
+        dispositivo_id.length === 0 ||
+        dispositivo_id.length > 64 ||
         typeof turbidez_ntu !== "number" ||
         typeof tds_ppm !== "number" ||
         typeof temperatura_c !== "number"
@@ -32,6 +42,22 @@ export function crearServidorHttp(): express.Express {
           ok: false,
           error:
             "Campos requeridos: dispositivo_id (string), turbidez_ntu (number), tds_ppm (number), temperatura_c (number).",
+        });
+      }
+
+      // Validación de rangos físicos plausibles
+      const fuera =
+        turbidez_ntu < 0 ||
+        turbidez_ntu > 4000 ||
+        tds_ppm < 0 ||
+        tds_ppm > 5000 ||
+        temperatura_c < -10 ||
+        temperatura_c > 80;
+      if (fuera) {
+        return res.status(400).json({
+          ok: false,
+          error:
+            "Valores fuera de rango (turbidez 0–4000 NTU, TDS 0–5000 ppm, temp -10–80 °C).",
         });
       }
 

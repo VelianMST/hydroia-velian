@@ -3,6 +3,7 @@ import {
   type ReportePublico,
   type DiagnosticoPublico,
   type DatoAbiertoPublico,
+  type LecturaSensorPublica,
 } from "./supabase";
 import { normalizarNombre, nombreBonito } from "./geo";
 
@@ -129,6 +130,18 @@ export async function obtenerDatosAbiertos(): Promise<DatosAbiertos> {
     ultimo("sacmex_tandeo"),
   ]);
   return { cutzamala, sacmex };
+}
+
+export async function obtenerLecturasSensor(
+  limite = 40,
+): Promise<LecturaSensorPublica[]> {
+  const { data, error } = await supabase
+    .from("lecturas_sensor")
+    .select("id, dispositivo_id, turbidez_ntu, tds_ppm, temperatura_c, colonia, fecha")
+    .order("fecha", { ascending: false })
+    .limit(limite);
+  if (error) return []; // tabla sin lectura pública o sin datos: no rompe nada
+  return (data ?? []) as LecturaSensorPublica[];
 }
 
 export interface DistribucionRiesgo {

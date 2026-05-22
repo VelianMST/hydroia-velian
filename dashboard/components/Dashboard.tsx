@@ -8,18 +8,24 @@ import ReportesPorColoniaChart from "./ReportesPorColoniaChart";
 import RiesgoChart from "./RiesgoChart";
 import RecentReportsTable from "./RecentReportsTable";
 import DatosAbiertosPanel from "./DatosAbiertos";
+import SensorIoT from "./SensorIoT";
 import {
   obtenerDiagnosticos,
   obtenerEstadisticas,
   obtenerReportes,
   obtenerDatosAbiertos,
+  obtenerLecturasSensor,
   agruparReportesPorColonia,
   type Estadisticas,
   type ReportesPorColonia,
   type DistribucionRiesgo,
   type DatosAbiertos,
 } from "@/lib/queries";
-import type { DiagnosticoPublico, ReportePublico } from "@/lib/supabase";
+import type {
+  DiagnosticoPublico,
+  ReportePublico,
+  LecturaSensorPublica,
+} from "@/lib/supabase";
 
 const REFRESH_MS = 60_000;
 
@@ -28,20 +34,23 @@ export default function Dashboard() {
   const [diagnosticos, setDiagnosticos] = useState<DiagnosticoPublico[] | null>(null);
   const [stats, setStats] = useState<Estadisticas | null>(null);
   const [datosAbiertos, setDatosAbiertos] = useState<DatosAbiertos | null>(null);
+  const [lecturas, setLecturas] = useState<LecturaSensorPublica[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
     try {
-      const [r, d, s, da] = await Promise.all([
+      const [r, d, s, da, ls] = await Promise.all([
         obtenerReportes(),
         obtenerDiagnosticos(),
         obtenerEstadisticas(),
         obtenerDatosAbiertos(),
+        obtenerLecturasSensor(),
       ]);
       setReportes(r);
       setDiagnosticos(d);
       setStats(s);
       setDatosAbiertos(da);
+      setLecturas(ls);
       setError(null);
     } catch (err) {
       console.error("Error cargando datos:", err);
@@ -109,6 +118,8 @@ export default function Dashboard() {
       </section>
 
       <DatosAbiertosPanel datos={datosAbiertos} cargando={cargando} />
+
+      <SensorIoT lecturas={lecturas} cargando={cargando} />
 
       {error && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-6">

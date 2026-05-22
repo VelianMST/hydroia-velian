@@ -37,3 +37,6 @@ model/.venv/
 # OS
 .DS_Store
 *.pem
+
+# Edición de video (Remotion, 1+ GB de .mov/.mp4) — no va al repo
+edicion/

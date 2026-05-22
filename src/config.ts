@@ -6,6 +6,7 @@ export interface Config {
   supabaseUrl: string;
   supabaseKey: string;
   openaiApiKey: string;
+  sensorApiKey: string;
   port: number;
 }
 
@@ -36,5 +37,6 @@ export const config: Config = {
   supabaseUrl: required("SUPABASE_URL"),
   supabaseKey: required("SUPABASE_KEY"),
   openaiApiKey: optional("OPENAI_API_KEY"),
+  sensorApiKey: optional("SENSOR_API_KEY"),
   port: optionalNumber("PORT", 3001),
 };

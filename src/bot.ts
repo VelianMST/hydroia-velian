@@ -16,6 +16,7 @@ import { handlePrediccionComando } from "./handlers/prediccion.js";
 import { handleTips } from "./handlers/tips.js";
 import { handleEstadisticas } from "./handlers/estadisticas.js";
 import { handleSobre } from "./handlers/sobre.js";
+import { handleSensor } from "./handlers/sensor.js";
 import { handleCallback } from "./handlers/callbacks.js";
 import { handleVoice } from "./handlers/voice.js";
 
@@ -33,6 +34,7 @@ bot.command("reportar", handleReportarComando);
 bot.command("prediccion", handlePrediccionComando);
 bot.command("tips", handleTips);
 bot.command("estadisticas", handleEstadisticas);
+bot.command("sensor", handleSensor);
 bot.command("borrar", handleBorrarComando);
 
 bot.on("callback_query:data", handleCallback);
@@ -58,6 +60,7 @@ export async function setBotCommands(): Promise<void> {
     { command: "prediccion", description: "Predicción de tandeos" },
     { command: "tips", description: "3 tips de ahorro de agua" },
     { command: "estadisticas", description: "Estadísticas en vivo del proyecto" },
+    { command: "sensor", description: "Última lectura del sensor IoT" },
     { command: "borrar", description: "Borrar mis datos (derecho al olvido)" },
   ]);
 }

@@ -9,6 +9,7 @@ const HELP_MESSAGE = `Estos son los comandos disponibles:
 /prediccion — predicción de tandeos para tu colonia
 /tips — 3 tips de ahorro de agua (varían cada vez)
 /estadisticas — estadísticas en vivo del proyecto
+/sensor — última lectura del sensor IoT (turbidez, TDS, temperatura)
 /borrar — borrar todos tus datos (derecho al olvido)
 
 📷 Mándame también una foto del agua de tu llave o tinaco y te digo qué observo. 💧`;

@@ -42,3 +42,13 @@ export interface DatoAbiertoPublico {
   confiable: boolean;
   fecha: string;
 }
+
+export interface LecturaSensorPublica {
+  id: string;
+  dispositivo_id: string;
+  turbidez_ntu: number;
+  tds_ppm: number;
+  temperatura_c: number;
+  colonia: string | null;
+  fecha: string;
+}
