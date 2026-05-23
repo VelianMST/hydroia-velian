@@ -1,15 +1,17 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { config } from "../config.js";
-
-const client = new Anthropic({ apiKey: config.anthropicApiKey, maxRetries: 3 });
-const MODEL = "claude-sonnet-4-5";
 
 /**
- * "Gota" — el conocimiento experto es ESPEJO de dashboard/lib/asistente.ts
- * (GOTA_CONOCIMIENTO). Si lo mejoras allá, mejóralo aquí. Lo único distinto es
- * el FORMATO: el bot responde corto (mensajes de Telegram); la app, detallado.
+ * "Gota" — asistente de agua con IA. El CONOCIMIENTO (este núcleo experto) se
+ * comparte con el bot de Telegram (espejo en src/services/claudeText.ts): si lo
+ * mejoras aquí, mejóralo allá. Lo que cambia por plataforma es solo el FORMATO
+ * (la app responde detallado; el bot, corto). Datos de desinfección basados en
+ * guías de CDC/EPA; usos del agua y reúso, en la NOM-003 y fuentes públicas.
  */
-const GOTA_CONOCIMIENTO = `Eres "Gota", el asistente de agua de HydroIA Velian, experto en agua doméstica del Valle de México (CDMX y Estado de México). Ayudas a la gente a usar, cuidar y tratar el agua de forma segura.
+
+const MODEL = "claude-sonnet-4-5";
+
+/** Núcleo de conocimiento de Gota (compartido bot + app). */
+export const GOTA_CONOCIMIENTO = `Eres "Gota", el asistente de agua de HydroIA Velian, experto en agua doméstica del Valle de México (CDMX y Estado de México). Ayudas a la gente a usar, cuidar y tratar el agua de forma segura.
 
 TU ALCANCE (solo temas de agua): tandeos y escasez, calidad del agua, qué hacer con el agua según cómo se vea, desinfección casera, reúso de aguas grises, ahorro de agua, almacenamiento, reportes ciudadanos y predicción de cortes. Si te preguntan algo que no es de agua, dilo con amabilidad y reencauza.
 
@@ -41,30 +43,39 @@ REGLAS DE HONESTIDAD (obligatorias):
 - Ante señales serias (olor a drenaje, color persistente raro, gente enferma), recomienda no consumirla y acudir a la autoridad o a un laboratorio.
 - No inventes datos ni cifras. Si no sabes algo, dilo.
 
-ESTILO: español de México, cálido, claro y respetuoso; tutea.`;
+ESTILO: español de México, cálido, claro y respetuoso; tutea. Personaliza: si te falta un dato útil (colonia, tamaño de la familia, cómo se ve o huele el agua, si hay jardín), pregúntalo en vez de suponer.`;
 
-const SYSTEM_PROMPT = `${GOTA_CONOCIMIENTO}
+/** Envoltura de FORMATO para la app (respuestas completas). */
+const SYSTEM_APP = `${GOTA_CONOCIMIENTO}
 
-FORMATO (Telegram): responde CORTO y en TEXTO PLANO (sin markdown ni asteriscos), máximo 4 o 5 oraciones. Usa máximo 1 o 2 emojis (💧 🚰 ⚠️ ✅ 📍). Nada de listas largas. Si la persona necesita más detalle, dale lo esencial y ofrece seguir. Cuando sea natural, recuérdale los comandos: /reportar, /prediccion, /tips, /ayuda. Si te falta un dato para personalizar (colonia, cómo se ve el agua), pregúntalo en una sola frase.`;
+FORMATO (app): responde en TEXTO PLANO, natural y conversacional. NO uses markdown: nada de #, ##, ** (asteriscos) ni encabezados. Si necesitas enumerar, usa guiones simples (-) o números (1. 2. 3.). Sé conciso pero completo (1 a 3 párrafos o una lista corta). Usa emojis con mesura (💧🚿🪣🌱⚠️). Cuando venga al caso, invita a usar las otras funciones de la app: Reportar, Predicción o el Diagnóstico por foto.`;
 
-export async function responderTexto(mensajeUsuario: string): Promise<string> {
-  const respuesta = await client.messages.create({
+export interface MensajeChat {
+  role: "user" | "assistant";
+  content: string;
+}
+
+let cliente: Anthropic | null = null;
+function getClient(): Anthropic {
+  if (cliente) return cliente;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("Falta ANTHROPIC_API_KEY (variable solo de servidor).");
+  cliente = new Anthropic({ apiKey, maxRetries: 2 });
+  return cliente;
+}
+
+/** Responde a la conversación con Gota (multi-turno). */
+export async function responderGota(mensajes: MensajeChat[]): Promise<string> {
+  const respuesta = await getClient().messages.create({
     model: MODEL,
-    max_tokens: 500,
-    temperature: 0.5,
-    system: [
-      {
-        type: "text",
-        text: SYSTEM_PROMPT,
-        cache_control: { type: "ephemeral" },
-      },
-    ],
-    messages: [{ role: "user", content: mensajeUsuario }],
+    max_tokens: 700,
+    temperature: 0.4,
+    system: [{ type: "text", text: SYSTEM_APP, cache_control: { type: "ephemeral" } }],
+    messages: mensajes.map((m) => ({ role: m.role, content: m.content })),
   });
-
   const bloque = respuesta.content.find((b) => b.type === "text");
   if (!bloque || bloque.type !== "text") {
-    return "No pude generar una respuesta. Prueba con /ayuda para ver lo que sé hacer.";
+    return "No pude generar una respuesta ahora. ¿Puedes intentar de nuevo?";
   }
   return bloque.text.trim();
 }
