@@ -87,7 +87,7 @@ export default function Dashboard() {
     <>
       <section
         id="estadisticas"
-        className="max-w-7xl mx-auto px-4 sm:px-6 -mt-12 md:-mt-14 relative z-10"
+        className="max-w-7xl mx-auto px-4 sm:px-6 mt-10"
       >
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KPICard

@@ -1,10 +1,17 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Droplets } from "lucide-react";
+import { NAV_ITEMS } from "./navItems";
 
 export default function Header() {
+  const pathname = usePathname();
+
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-slate-200">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 py-3">
-        <div className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3">
           <div
             className="w-9 h-9 rounded-xl flex items-center justify-center text-white"
             style={{ background: "linear-gradient(135deg, #1f4e79, #2e75b6)" }}
@@ -16,19 +23,27 @@ export default function Header() {
             <p className="text-sm font-semibold text-[color:var(--color-primary)]">
               HydroIA Velian
             </p>
-            <p className="text-xs text-slate-500">Mapa Público de Aguas del Valle de México</p>
+            <p className="text-xs text-slate-500">IA ciudadana por el agua del Valle de México</p>
           </div>
-        </div>
+        </Link>
         <nav aria-label="Navegación principal" className="hidden md:flex items-center gap-6 text-sm">
-          <a href="#mapa" className="text-slate-600 hover:text-[color:var(--color-primary)]">
-            Mapa
-          </a>
-          <a href="#estadisticas" className="text-slate-600 hover:text-[color:var(--color-primary)]">
-            Estadísticas
-          </a>
-          <a href="#acerca" className="text-slate-600 hover:text-[color:var(--color-primary)]">
-            Acerca de
-          </a>
+          {NAV_ITEMS.map(({ href, label }) => {
+            const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={active ? "page" : undefined}
+                className={
+                  active
+                    ? "text-[color:var(--color-primary)] font-semibold"
+                    : "text-slate-600 hover:text-[color:var(--color-primary)]"
+                }
+              >
+                {label}
+              </Link>
+            );
+          })}
         </nav>
       </div>
     </header>

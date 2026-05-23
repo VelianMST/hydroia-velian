@@ -4,11 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/sync-model.mjs",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "sync:model": "node scripts/sync-model.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.91.1",
     "@supabase/supabase-js": "^2.105.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.11.0",
