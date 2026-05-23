@@ -23,6 +23,11 @@ export interface ReportePublico {
   lng: number | null;
   descripcion: string;
   fecha: string;
+  severidad?: string | null;
+  litros_dia?: number | null;
+  foto_url?: string | null;
+  confirma_sigue?: number | null;
+  confirma_reparada?: number | null;
 }
 
 export interface DiagnosticoPublico {

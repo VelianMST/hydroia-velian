@@ -66,3 +66,38 @@ export async function geocodificarApp(
   const fb = coordFallback(`${normalizarNombre(colonia)}|${normalizarNombre(municipio)}`);
   return { lat: fb.lat, lng: fb.lng, fuente: "fallback" };
 }
+
+export interface LugarInverso {
+  colonia: string;
+  municipio: string;
+  estado: string;
+}
+
+/**
+ * Reverse-geocoding: de coordenadas exactas (GPS de la fuga) saca colonia,
+ * municipio y estado, para no pedírselos al usuario. Si falla, regresa vacíos
+ * (el reporte igual se guarda con las coordenadas exactas).
+ */
+export async function reverseGeocodeApp(lat: number, lng: number): Promise<LugarInverso> {
+  const vacio: LugarInverso = { colonia: "", municipio: "", estado: "" };
+  try {
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+    const resp = await fetch(url, {
+      signal: controller.signal,
+      headers: { "User-Agent": UA, "Accept-Language": "es" },
+    });
+    clearTimeout(t);
+    if (!resp.ok) return vacio;
+    const data = (await resp.json()) as { address?: Record<string, string> };
+    const a = data.address ?? {};
+    const colonia = a.neighbourhood || a.suburb || a.quarter || a.residential || a.hamlet || "";
+    const municipio =
+      a.city || a.town || a.municipality || a.village || a.county || a.city_district || "";
+    const estado = a.state || "";
+    return { colonia, municipio, estado };
+  } catch {
+    return vacio;
+  }
+}

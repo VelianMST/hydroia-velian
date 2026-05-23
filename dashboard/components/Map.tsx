@@ -7,6 +7,15 @@ import "leaflet/dist/leaflet.css";
 import { coordFallback, VALLE_CENTER } from "@/lib/colonias";
 import { colorTipo, etiquetaTipo, fechaRelativa } from "@/lib/format";
 import type { ReportePublico } from "@/lib/supabase";
+import ConfirmarFuga from "./ConfirmarFuga";
+
+const SEV_LABEL: Record<string, string> = {
+  goteo: "Goteo o humedad",
+  chorro: "Chorro pequeño",
+  chorro_fuerte: "Chorro fuerte / encharcamiento",
+  brote: "Brote mayor / inundación",
+  indeterminada: "Severidad sin determinar",
+};
 
 interface MapProps {
   reportes: ReportePublico[];
@@ -53,18 +62,39 @@ export default function Map({ reportes }: MapProps) {
         return (
           <Marker key={r.id} position={[coord.lat, coord.lng]} icon={icon}>
             <Popup>
-              <div className="text-sm">
+              <div className="text-sm" style={{ minWidth: 180 }}>
                 <p className="font-semibold mb-1" style={{ color: colorTipo(r.tipo) }}>
                   {etiquetaTipo(r.tipo)}
                 </p>
+                {r.tipo === "fuga" && r.foto_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={r.foto_url}
+                    alt="Foto de la fuga"
+                    style={{ width: "100%", height: 96, objectFit: "cover", borderRadius: 8, marginBottom: 6 }}
+                  />
+                )}
+                {r.tipo === "fuga" && r.severidad && (
+                  <p className="text-slate-700" style={{ margin: 0 }}>
+                    💧 {SEV_LABEL[r.severidad] ?? r.severidad}
+                    {r.litros_dia ? ` · ~${r.litros_dia} L/día` : ""}
+                  </p>
+                )}
                 {r.colonia && (
-                  <p className="text-slate-700">
+                  <p className="text-slate-700" style={{ margin: 0 }}>
                     📍 {r.colonia}
                     {r.municipio ? `, ${r.municipio}` : ""}
                   </p>
                 )}
                 <p className="text-slate-700">{r.descripcion}</p>
                 <p className="text-slate-400 text-xs mt-1">{fechaRelativa(r.fecha)}</p>
+                {r.tipo === "fuga" && (
+                  <ConfirmarFuga
+                    reporteId={r.id}
+                    sigueInicial={r.confirma_sigue ?? 0}
+                    reparadaInicial={r.confirma_reparada ?? 0}
+                  />
+                )}
               </div>
             </Popup>
           </Marker>

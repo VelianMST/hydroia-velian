@@ -8,7 +8,7 @@ import {
 import { normalizarNombre, nombreBonito } from "./geo";
 
 const COLS_REPORTE =
-  "id, tipo, colonia, colonia_norm, municipio, lat, lng, descripcion, fecha";
+  "id, tipo, colonia, colonia_norm, municipio, lat, lng, descripcion, fecha, severidad, litros_dia, foto_url, confirma_sigue, confirma_reparada";
 
 export async function obtenerReportes(): Promise<ReportePublico[]> {
   const { data, error } = await supabase
