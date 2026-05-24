@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Megaphone, BarChart3, Camera, Lightbulb } from "lucide-react";
+import { Megaphone, BarChart3, Camera, Lightbulb, Gauge, Truck } from "lucide-react";
 
 const ACCIONES = [
   {
@@ -24,6 +24,20 @@ const ACCIONES = [
     color: "#10b981",
   },
   {
+    href: "/medidor",
+    label: "Mi medidor",
+    desc: "Lee tu consumo y detecta fugas",
+    icon: Gauge,
+    color: "#0ea5e9",
+  },
+  {
+    href: "/pipas",
+    label: "Pipas y ayuda",
+    desc: "Pide pipa gratis o ayuda vecinal",
+    icon: Truck,
+    color: "#8b5cf6",
+  },
+  {
     href: "/tips",
     label: "Tips",
     desc: "Cuida y ahorra agua en casa",
@@ -38,7 +52,7 @@ export default function QuickActions() {
       <h2 className="text-lg font-semibold text-[color:var(--color-primary)] mb-4">
         ¿Qué quieres hacer?
       </h2>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         {ACCIONES.map(({ href, label, desc, icon: Icon, color }) => (
           <Link
             key={href}
