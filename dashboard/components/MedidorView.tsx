@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
-import { Camera, Loader2, Check, Trash2, AlertTriangle, Gauge, Info } from "lucide-react";
+import { Camera, Loader2, Check, Trash2, AlertTriangle, Gauge, Info, Lightbulb, Users } from "lucide-react";
 import { reducirImagen } from "@/lib/imagen";
 
 interface Lectura {
@@ -11,6 +11,12 @@ interface Lectura {
 }
 
 const KEY = "hv-medidor-lecturas";
+const KEY_PERSONAS = "hv-medidor-personas";
+
+/** Quita marcas de markdown que el modelo a veces incluye. */
+function limpiar(s: string): string {
+  return s.replace(/\*\*/g, "").replace(/__/g, "").replace(/^#{1,6}\s+/gm, "").replace(/`/g, "").trim();
+}
 
 function cargar(): Lectura[] {
   try {
@@ -39,8 +45,27 @@ export default function MedidorView() {
   const [editable, setEditable] = useState("");
   const [nota, setNota] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [personas, setPersonas] = useState("");
+  const [consejos, setConsejos] = useState<string | null>(null);
+  const [cargandoConsejos, setCargandoConsejos] = useState(false);
 
-  useEffect(() => setLecturas(cargar()), []);
+  useEffect(() => {
+    setLecturas(cargar());
+    try {
+      setPersonas(localStorage.getItem(KEY_PERSONAS) ?? "");
+    } catch {
+      /* */
+    }
+  }, []);
+
+  function cambiarPersonas(v: string) {
+    setPersonas(v);
+    try {
+      localStorage.setItem(KEY_PERSONAS, v);
+    } catch {
+      /* */
+    }
+  }
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -101,8 +126,8 @@ export default function MedidorView() {
     guardar([]);
   }
 
-  // Cálculo de consumo y anomalía
-  const { periodos, anomalia, ultimoLitrosDia } = useMemo(() => {
+  // Cálculo de consumo, anomalía, promedio y tendencia
+  const { periodos, anomalia, ultimoLitrosDia, promedioLitrosDia, tendencia } = useMemo(() => {
     const ps: Periodo[] = [];
     const tasas: number[] = [];
     for (let i = 1; i < lecturas.length; i++) {
@@ -117,14 +142,55 @@ export default function MedidorView() {
       });
     }
     let anom = false;
+    let tend: "subiendo" | "bajando" | "estable" = "estable";
+    const prom = tasas.length ? Math.round(tasas.reduce((a, b) => a + b, 0) / tasas.length) : 0;
     if (tasas.length >= 2) {
-      const previas = tasas.slice(0, -1).slice().sort((a, b) => a - b);
-      const mediana = previas[Math.floor(previas.length / 2)];
+      const previas = tasas.slice(0, -1);
+      const ordenadas = [...previas].sort((a, b) => a - b);
+      const mediana = ordenadas[Math.floor(ordenadas.length / 2)];
       const ultimo = tasas[tasas.length - 1];
       if (mediana > 0 && ultimo > mediana * 1.4) anom = true;
+      const avgPrev = previas.reduce((a, b) => a + b, 0) / previas.length;
+      if (avgPrev > 0 && ultimo > avgPrev * 1.15) tend = "subiendo";
+      else if (avgPrev > 0 && ultimo < avgPrev * 0.85) tend = "bajando";
     }
-    return { periodos: ps, anomalia: anom, ultimoLitrosDia: tasas[tasas.length - 1] ?? null };
+    return {
+      periodos: ps,
+      anomalia: anom,
+      ultimoLitrosDia: tasas[tasas.length - 1] ?? null,
+      promedioLitrosDia: prom,
+      tendencia: tend,
+    };
   }, [lecturas]);
+
+  async function pedirConsejos() {
+    setCargandoConsejos(true);
+    setConsejos(null);
+    try {
+      const p = Number(personas);
+      const personasN = Number.isFinite(p) && p > 0 ? p : null;
+      const litrosPorPersona = personasN && promedioLitrosDia ? Math.round(promedioLitrosDia / personasN) : null;
+      const res = await fetch("/api/medidor-consejos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          promedioLitrosDia,
+          ultimoLitrosDia: ultimoLitrosDia ?? 0,
+          personas: personasN,
+          litrosPorPersona,
+          tendencia,
+          anomalia,
+          numLecturas: lecturas.length,
+        }),
+      });
+      const data = await res.json();
+      setConsejos(data.ok ? limpiar(data.consejos) : data.error ?? "No se pudo generar.");
+    } catch {
+      setConsejos("No hay conexión. Intenta de nuevo.");
+    } finally {
+      setCargandoConsejos(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -232,6 +298,43 @@ export default function MedidorView() {
           </ul>
         </div>
       )}
+
+      {/* Coach de ahorro con IA */}
+      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 space-y-3">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-emerald-700">
+          <Lightbulb className="w-4 h-4" aria-hidden /> Consejos para ahorrar (según tu consumo)
+        </h3>
+        <div className="flex items-center gap-2">
+          <Users className="w-4 h-4 text-slate-400" aria-hidden />
+          <label htmlFor="personas" className="text-sm text-slate-600">¿Cuántas personas viven en casa?</label>
+          <input
+            id="personas"
+            type="number"
+            min={1}
+            value={personas}
+            onChange={(e) => cambiarPersonas(e.target.value)}
+            placeholder="ej. 4"
+            className="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-slate-800 outline-none focus:border-emerald-500"
+          />
+        </div>
+        {periodos.length >= 1 ? (
+          <button
+            onClick={pedirConsejos}
+            disabled={cargandoConsejos}
+            className="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 text-white font-medium px-4 py-2.5 rounded-xl hover:opacity-90 transition disabled:opacity-60"
+          >
+            {cargandoConsejos ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden /> : <Lightbulb className="w-4 h-4" aria-hidden />}
+            {cargandoConsejos ? "Analizando tu consumo…" : "Generar consejos con IA"}
+          </button>
+        ) : (
+          <p className="text-sm text-slate-500">Toma al menos 2 lecturas (en días distintos) y aquí te daré consejos personalizados según tu consumo real. 📈</p>
+        )}
+        {consejos && (
+          <div className="rounded-xl bg-white border border-emerald-100 p-3 text-sm text-slate-700 whitespace-pre-wrap">
+            {consejos}
+          </div>
+        )}
+      </div>
 
       {/* Prueba rápida de fuga */}
       <div className="rounded-2xl border border-[color:var(--color-primary)]/15 bg-[color:var(--color-primary)]/5 p-4">
