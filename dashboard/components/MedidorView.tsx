@@ -18,6 +18,18 @@ function limpiar(s: string): string {
   return s.replace(/\*\*/g, "").replace(/__/g, "").replace(/^#{1,6}\s+/gm, "").replace(/`/g, "").trim();
 }
 
+/** Semana de ejemplo (17–23 may) — consumo normal (~167 L/persona) + subida el último día.
+ *  Solo se carga manualmente con ?demo=1; sirve para capturas de demostración. */
+const SEMANA_EJEMPLO: Lectura[] = [
+  { fecha: "2026-05-17T12:00:00", m3: 1452.0 },
+  { fecha: "2026-05-18T12:00:00", m3: 1452.6 },
+  { fecha: "2026-05-19T12:00:00", m3: 1453.2 },
+  { fecha: "2026-05-20T12:00:00", m3: 1453.75 },
+  { fecha: "2026-05-21T12:00:00", m3: 1454.4 },
+  { fecha: "2026-05-22T12:00:00", m3: 1455.0 },
+  { fecha: "2026-05-23T12:00:00", m3: 1456.0 },
+];
+
 function cargar(): Lectura[] {
   try {
     const raw = localStorage.getItem(KEY);
@@ -48,15 +60,25 @@ export default function MedidorView() {
   const [personas, setPersonas] = useState("");
   const [consejos, setConsejos] = useState<string | null>(null);
   const [cargandoConsejos, setCargandoConsejos] = useState(false);
+  const [demo, setDemo] = useState(false);
 
   useEffect(() => {
     setLecturas(cargar());
     try {
       setPersonas(localStorage.getItem(KEY_PERSONAS) ?? "");
+      if (new URLSearchParams(window.location.search).get("demo") === "1") setDemo(true);
     } catch {
       /* */
     }
   }, []);
+
+  function cargarEjemplo() {
+    setLecturas(SEMANA_EJEMPLO);
+    guardar(SEMANA_EJEMPLO);
+    cambiarPersonas("4");
+    setConsejos(null);
+    setError(null);
+  }
 
   function cambiarPersonas(v: string) {
     setPersonas(v);
@@ -346,6 +368,15 @@ export default function MedidorView() {
           el número <strong>subió</strong> sin haber usado agua, casi seguro tienes una fuga interna.
         </p>
       </div>
+
+      {demo && (
+        <button
+          onClick={cargarEjemplo}
+          className="w-full text-xs text-slate-400 underline mt-2"
+        >
+          Cargar semana de ejemplo (demo)
+        </button>
+      )}
     </div>
   );
 }
